@@ -42,13 +42,13 @@ async function getDashboard(req, res, next) {
             }),
             prisma_1.default.transaction.groupBy({
                 by: ['categoryId'],
-                where: { userId, type: 'EXPENSE', date: { gte: monthStart, lte: monthEnd } },
+                where: { userId, type: 'EXPENSE' },
                 _sum: { amount: true },
             }),
         ]);
-        const totalIncome = Number(monthIncome._sum.amount || 0);
-        const totalExpenses = Number(monthExpense._sum.amount || 0);
-        const balance = Number(allTimeIncome._sum.amount || 0) - Number(allTimeExpense._sum.amount || 0);
+        const totalIncome = Number(allTimeIncome._sum.amount || 0);
+        const totalExpenses = Number(allTimeExpense._sum.amount || 0);
+        const balance = totalIncome - totalExpenses;
         const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
         const categoryIds = categoryBreakdown.map((c) => c.categoryId);
         const categories = await prisma_1.default.category.findMany({

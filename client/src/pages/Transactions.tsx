@@ -260,7 +260,7 @@ export default function Transactions() {
               <label className="label">{t.dashboard.type}</label>
               <select
                 value={filters.type || ''}
-                onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value as 'ALL' | 'INCOME' | 'EXPENSE', page: 1 }))}
+                onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value as 'INCOME' | 'EXPENSE' | '', page: 1 }))}
                 className="input-field"
               >
                 <option value="">{t.transactions.allTypes}</option>
@@ -457,7 +457,7 @@ export default function Transactions() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
               <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-surface-100 dark:bg-surface-700">
                 <button
                   type="button"

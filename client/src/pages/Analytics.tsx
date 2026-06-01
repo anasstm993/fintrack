@@ -40,7 +40,6 @@ export default function Analytics() {
   const pieData = { labels: report?.expenseByCategory?.map(c => getTranslated(c.categoryName)) || [], datasets: [{ data: report?.expenseByCategory?.map(c => c.amount) || [], backgroundColor: PIE_COLORS, borderWidth: 0, hoverOffset: 8 }] };
   const barData = { labels: [t.analytics.totalIncome, t.analytics.totalExpenses, t.analytics.netSavings], datasets: [{ data: [report?.totalIncome||0, report?.totalExpenses||0, report?.netSavings||0], backgroundColor: ['rgba(16,185,129,0.8)','rgba(239,68,68,0.8)','rgba(59,130,246,0.8)'], borderRadius: 8, barThickness: 48 }] };
   const lineData = { labels: report?.dailyChart?.map(d => `${new Date(d.date).getDate()}`) || [], datasets: [{ label: t.analytics.totalIncome, data: report?.dailyChart?.map(d => d.income) || [], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4, pointRadius: 3 }, { label: t.analytics.totalExpenses, data: report?.dailyChart?.map(d => d.expense) || [], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.4, pointRadius: 3 }] };
-  // @ts-expect-error - Chart.js options type mismatch
   const opts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { color: gc }, ticks: { color: tc } } } };
 
   return (

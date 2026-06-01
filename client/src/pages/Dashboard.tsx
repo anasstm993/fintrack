@@ -49,7 +49,7 @@ function useCountUp(end: number, duration: number = 1000) {
   return count;
 }
 
-function AnimatedCurrency({ amount, currency }: { amount: number, currency: string }) {
+function AnimatedCurrency({ amount, currency }: { amount: number, currency: any }) {
   const count = useCountUp(amount);
   return <>{formatCurrency(count, currency)}</>;
 }
@@ -163,7 +163,6 @@ export default function Dashboard() {
   };
 
   const pieChartData = { labels: dashboard?.expenseByCategory?.map(c => getTranslatedCategory(t, c.categoryName)) || [], datasets: [{ data: dashboard?.expenseByCategory?.map(c => c.amount) || [], backgroundColor: PIE_COLORS, borderWidth: 0, hoverOffset: 8 }] };
-  // @ts-expect-error - Chart.js options type mismatch
   const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor, font: { size: 12 } } } }, scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor } } } };
 
   return (

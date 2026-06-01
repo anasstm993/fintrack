@@ -5,7 +5,7 @@ import type { TranslationKeys } from '../i18n/translations';
  * Falls back to the original name if no translation is found.
  */
 export function getTranslatedCategory(t: TranslationKeys, name: string): string {
-  return (t.categories as Record<string, Record<string, string>>)?.default?.[name] || name;
+  return (t.categories as any)?.default?.[name] || name;
 }
 
 /**

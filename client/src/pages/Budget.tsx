@@ -240,7 +240,7 @@ export default function Budget() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
               <div>
                 <label className="label">{t.dashboard.category}</label>
                 <select
