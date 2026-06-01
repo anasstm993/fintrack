@@ -18,18 +18,27 @@ const PORT = process.env.PORT || 5000;
 
 // Security middleware
 app.use(helmet());
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    // Allow any localhost port in development
-    if (origin.match(/^http:\/\/localhost:\d+$/)) return callback(null, true);
-    // Allow configured CLIENT_URL
-    if (origin === process.env.CLIENT_URL) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      // Allow any localhost port in development
+      if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true);
+
+      // Allow configured CLIENT_URL
+      if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) return callback(null, true);
+
+      // Allow requests from the Coolify / project domain (e.g. fintrack.project.net.ly)
+      // Also allow subdomains that end with the project domain.
+      if (/\.project\.net\.ly$/.test(origin)) return callback(null, true);
+
+      callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
 
 // Rate limiting
 const limiter = rateLimit({
