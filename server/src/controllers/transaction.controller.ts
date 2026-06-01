@@ -3,17 +3,44 @@ import prisma from '../utils/prisma';
 import { NotFoundError } from '../utils/errors';
 import { Prisma } from '@prisma/client';
 
+/** Builds a Prisma `where` clause for transaction queries from request query params. */
+function buildTransactionWhere(
+  userId: string,
+  query: Record<string, unknown>
+): Prisma.TransactionWhereInput {
+  const { search, type, categoryId, startDate, endDate } = query;
+  const where: Prisma.TransactionWhereInput = { userId };
+
+  if (search) {
+    where.OR = [
+      { title: { contains: search as string } },
+      { description: { contains: search as string } },
+    ];
+  }
+
+  if (type && (type === 'INCOME' || type === 'EXPENSE')) {
+    where.type = type as 'INCOME' | 'EXPENSE';
+  }
+
+  if (categoryId) {
+    where.categoryId = categoryId as string;
+  }
+
+  if (startDate || endDate) {
+    where.date = {};
+    if (startDate) where.date.gte = new Date(startDate as string);
+    if (endDate) where.date.lte = new Date(endDate as string);
+  }
+
+  return where;
+}
+
 export async function getTransactions(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user!.userId;
     const {
       page = '1',
       limit = '10',
-      search,
-      type,
-      categoryId,
-      startDate,
-      endDate,
       sortBy = 'date',
       sortOrder = 'desc',
     } = req.query;
@@ -22,32 +49,7 @@ export async function getTransactions(req: Request, res: Response, next: NextFun
     const limitNum = Math.min(50, Math.max(1, parseInt(limit as string)));
     const skip = (pageNum - 1) * limitNum;
 
-    const where: Prisma.TransactionWhereInput = { userId };
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } },
-      ];
-    }
-
-    if (type && (type === 'INCOME' || type === 'EXPENSE')) {
-      where.type = type as 'INCOME' | 'EXPENSE';
-    }
-
-    if (categoryId) {
-      where.categoryId = categoryId as string;
-    }
-
-    if (startDate || endDate) {
-      where.date = {};
-      if (startDate) {
-        where.date.gte = new Date(startDate as string);
-      }
-      if (endDate) {
-        where.date.lte = new Date(endDate as string);
-      }
-    }
+    const where = buildTransactionWhere(userId, req.query as Record<string, unknown>);
 
     const orderBy: Prisma.TransactionOrderByWithRelationInput = {};
     const validSortFields = ['date', 'amount', 'title', 'createdAt'];
@@ -197,30 +199,7 @@ export async function deleteTransaction(req: Request, res: Response, next: NextF
 export async function exportTransactions(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user!.userId;
-    const { type, categoryId, startDate, endDate, search } = req.query;
-
-    const where: Prisma.TransactionWhereInput = { userId };
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } },
-      ];
-    }
-
-    if (type && (type === 'INCOME' || type === 'EXPENSE')) {
-      where.type = type as 'INCOME' | 'EXPENSE';
-    }
-
-    if (categoryId) {
-      where.categoryId = categoryId as string;
-    }
-
-    if (startDate || endDate) {
-      where.date = {};
-      if (startDate) where.date.gte = new Date(startDate as string);
-      if (endDate) where.date.lte = new Date(endDate as string);
-    }
+    const where = buildTransactionWhere(userId, req.query as Record<string, unknown>);
 
     const transactions = await prisma.transaction.findMany({
       where,

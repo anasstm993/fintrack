@@ -28,10 +28,12 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
       }
       req.user = payload;
       next();
-    }).catch(() => {
+    }).catch((e) => {
+      console.error('Database error in auth:', e);
       next(new UnauthorizedError('Authentication failed'));
     });
   } catch (error) {
+    console.error('JWT error:', error);
     next(new UnauthorizedError('Invalid or expired access token'));
   }
 }

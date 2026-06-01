@@ -23,6 +23,7 @@ model User {
   categories   Category[]
   transactions Transaction[]
   refreshTokens RefreshToken[]
+  budgets      Budget[]
 }
 
 model Category {
@@ -33,6 +34,7 @@ model Category {
   userId       String
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  budgets      Budget[]
   createdAt    DateTime        @default(now())
 
   @@unique([name, type, userId])
@@ -66,5 +68,19 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([token])
+  @@index([userId])
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  amount     Decimal
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([categoryId, userId])
   @@index([userId])
 }

@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { analyticsService } from '../services/analytics.service';
 import {
   LayoutDashboard,
   ArrowLeftRight,
   Tags,
+  Target,
   BarChart3,
   User,
   Settings,
@@ -15,15 +18,21 @@ import {
   Sun,
   Moon,
   Languages,
+  AlertTriangle,
+  AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '../store/authStore';
 import { useTheme } from '../store/themeStore';
 import { authService } from '../services/auth.service';
 import { useTranslation } from '../i18n';
+import { translateInsight } from '../utils/i18n';
 import { toast } from 'sonner';
+import type { Insight } from '../types';
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
   const { isDark, setTheme } = useTheme();
   const { t, language, setLanguage, isRTL } = useTranslation();
@@ -33,6 +42,7 @@ export default function DashboardLayout() {
     { name: t.nav.dashboard, href: '/dashboard', icon: LayoutDashboard },
     { name: t.nav.transactions, href: '/transactions', icon: ArrowLeftRight },
     { name: t.nav.categories, href: '/categories', icon: Tags },
+    { name: t.nav.budget || 'Budget', href: '/budget', icon: Target },
     { name: t.nav.analytics, href: '/analytics', icon: BarChart3 },
     { name: t.nav.profile, href: '/profile', icon: User },
     { name: t.nav.settings, href: '/settings', icon: Settings },
@@ -56,6 +66,24 @@ export default function DashboardLayout() {
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'ar' : 'en');
   };
+
+  const { data: insightsData } = useQuery({
+    queryKey: ['insights'],
+    queryFn: () => analyticsService.getInsights(),
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900">
@@ -178,10 +206,48 @@ export default function DashboardLayout() {
               )}
             </button>
 
-            <button className="p-2 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors relative">
-              <Bell className="w-5 h-5 text-surface-500 dark:text-surface-400" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-500 rounded-full" />
-            </button>
+            <div className="relative" ref={notifRef}>
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors relative"
+              >
+                <Bell className="w-5 h-5 text-surface-500 dark:text-surface-400" />
+                {insightsData?.insights && insightsData.insights.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-500 rounded-full animate-pulse" />
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className={`absolute top-full mt-2 ${isRTL ? 'left-0' : 'right-0'} w-80 bg-white dark:bg-surface-800 rounded-xl shadow-xl border border-surface-200 dark:border-surface-700 overflow-hidden z-50 animate-scale-in`}>
+                  <div className="p-4 border-b border-surface-200 dark:border-surface-700 flex justify-between items-center bg-surface-50 dark:bg-surface-800/50">
+                    <h3 className="font-semibold text-surface-900 dark:text-white">Notifications</h3>
+                    <span className="text-xs font-medium text-surface-500 bg-surface-200 dark:bg-surface-700 px-2 py-0.5 rounded-full">
+                      {insightsData?.insights?.length || 0}
+                    </span>
+                  </div>
+                  <div className="max-h-[320px] overflow-y-auto">
+                    {!insightsData?.insights || insightsData.insights.length === 0 ? (
+                      <div className="p-8 text-center text-surface-500 text-sm">
+                        No notifications
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-surface-100 dark:divide-surface-700/50">
+                        {insightsData.insights.map((insight: Insight, idx: number) => (
+                          <div key={idx} className="p-4 flex items-start gap-3 hover:bg-surface-50 dark:hover:bg-surface-700/50 transition-colors cursor-pointer" onClick={() => { navigate('/budget'); setShowNotifications(false); }}>
+                            <div className={`mt-0.5 shrink-0 ${insight.type === 'danger' ? 'text-danger-500' : 'text-warning-500'}`}>
+                              {insight.type === 'danger' ? <AlertTriangle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                            </div>
+                            <p className="text-sm text-surface-700 dark:text-surface-300 leading-snug">
+                              {translateInsight(t, insight)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className={`hidden sm:flex items-center gap-3 ${isRTL ? 'pr-4 border-r' : 'pl-4 border-l'} border-surface-200 dark:border-surface-700`}>
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold">

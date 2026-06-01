@@ -43,8 +43,9 @@ export default function Register() {
       login(response.user, response.accessToken, response.refreshToken);
       toast.success(t.auth.accountCreated);
       navigate('/dashboard');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to create account');
+    } catch (err) {
+      const error = err as any;
+      toast.error(error.response?.data?.error || 'Registration failed');
     } finally {
       setIsLoading(false);
     }

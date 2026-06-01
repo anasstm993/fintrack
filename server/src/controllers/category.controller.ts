@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../utils/prisma';
 import { NotFoundError, BadRequestError } from '../utils/errors';
+import { Prisma, TransactionType } from '@prisma/client';
 
 export async function getCategories(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user!.userId;
     const { type } = req.query;
 
-    const where: any = { userId };
+    const where: Prisma.CategoryWhereInput = { userId };
     if (type && (type === 'INCOME' || type === 'EXPENSE')) {
-      where.type = type as string;
+      where.type = type as TransactionType;
     }
 
     const categories = await prisma.category.findMany({

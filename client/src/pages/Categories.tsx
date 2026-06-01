@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { Plus, X, Loader2, Pencil, Trash2, Tags, TrendingUp, TrendingDown } from 'lucide-react';
 import { categoryService } from '../services/category.service';
 import { useTranslation } from '../i18n';
+import { getTranslatedCategory } from '../utils/i18n';
 import { toast } from 'sonner';
 import type { Category } from '../types';
 
@@ -19,6 +20,8 @@ type CategoryForm = z.infer<typeof categorySchema>;
 export default function Categories() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const getTranslated = (name: string) => getTranslatedCategory(t, name);
+
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
@@ -61,7 +64,8 @@ export default function Categories() {
       }
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setShowModal(false);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as any;
       toast.error(error.response?.data?.error || 'Failed to save category');
     }
   };
@@ -72,7 +76,8 @@ export default function Categories() {
       await categoryService.delete(id);
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast.success(t.categories.categoryDeleted);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as any;
       toast.error(error.response?.data?.error || 'Failed to delete category');
     }
   };
@@ -157,7 +162,7 @@ export default function Categories() {
                     </button>
                   </div>
                 </div>
-                <h3 className="font-semibold text-surface-900 dark:text-white">{category.name}</h3>
+                <h3 className="font-semibold text-surface-900 dark:text-white">{getTranslated(category.name)}</h3>
                 <p className="text-sm text-surface-500 mt-1">
                   {category._count?.transactions || 0} {t.categories.transactions}
                 </p>
@@ -201,7 +206,7 @@ export default function Categories() {
                     </button>
                   </div>
                 </div>
-                <h3 className="font-semibold text-surface-900 dark:text-white">{category.name}</h3>
+                <h3 className="font-semibold text-surface-900 dark:text-white">{getTranslated(category.name)}</h3>
                 <p className="text-sm text-surface-500 mt-1">
                   {category._count?.transactions || 0} {t.categories.transactions}
                 </p>

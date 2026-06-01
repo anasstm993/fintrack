@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
@@ -10,6 +9,7 @@ import userRoutes from './routes/user.routes';
 import categoryRoutes from './routes/category.routes';
 import transactionRoutes from './routes/transaction.routes';
 import analyticsRoutes from './routes/analytics.routes';
+import budgetRoutes from './routes/budget.routes';
 
 dotenv.config();
 
@@ -44,7 +44,6 @@ app.use('/api/auth', limiter);
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 // Static files for avatars
 app.use('/uploads', express.static('uploads'));
@@ -55,6 +54,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/budgets', budgetRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

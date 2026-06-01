@@ -27,6 +27,7 @@ export const translations = {
       dashboard: 'Dashboard',
       transactions: 'Transactions',
       categories: 'Categories',
+      budget: 'Budgets',
       analytics: 'Analytics',
       profile: 'Profile',
       settings: 'Settings',
@@ -122,6 +123,16 @@ export const translations = {
       category: 'Category',
       amount: 'Amount',
       type: 'Type',
+      overspendingAlertTitle: 'Overspending Alert',
+      overspendingAlertDesc: 'Your expenses exceed your income this month. Consider reviewing your budget.',
+      overspendingWarning: 'Warning: You are spending more than you earn this month.',
+      topCategoryInsight: 'Your biggest expense category is {cat}.',
+      budgetDanger: 'You have exceeded your budget for {cat}.',
+      budgetWarning: 'You are close to exceeding your budget for {cat}.',
+      savingsImproved: 'Great job! Your savings rate improved this month.',
+      savingsDropped: 'Your savings rate has dropped compared to last month.',
+      spendingUp: 'Your spending has increased significantly this month.',
+      spendingDown: 'You are spending less than last month. Keep it up!',
     },
 
     // Transactions
@@ -182,6 +193,19 @@ export const translations = {
       categoryUpdated: 'Category updated',
       categoryDeleted: 'Category deleted',
       confirmDelete: 'Are you sure you want to delete this category?',
+      default: {
+        Salary: 'Salary',
+        Freelance: 'Freelance',
+        Investments: 'Investments',
+        Food: 'Food',
+        Transport: 'Transport',
+        Shopping: 'Shopping',
+        Bills: 'Bills',
+        Healthcare: 'Healthcare',
+        Entertainment: 'Entertainment',
+        Education: 'Education',
+        Other: 'Other',
+      }
     },
 
     // Analytics
@@ -250,6 +274,24 @@ export const translations = {
       november: 'November',
       december: 'December',
     },
+
+    // Budget
+    budget: {
+      title: 'Budgets',
+      subtitle: 'Manage your monthly spending limits',
+      addBudget: 'Set Budget',
+      setBudgetTitle: 'Set Budget',
+      saveBudget: 'Save Budget',
+      budgetSaved: 'Budget saved successfully',
+      budgetDeleted: 'Budget deleted successfully',
+      confirmDelete: 'Are you sure you want to delete this budget?',
+      spent: 'spent',
+      remaining: 'left',
+      over: 'over budget',
+      noBudgets: 'No budgets set',
+      createFirst: 'Set monthly spending limits for your categories to keep your expenses in check.',
+      allCategoriesHaveBudget: 'All expense categories already have budgets.',
+    },
   },
 
   ar: {
@@ -280,6 +322,7 @@ export const translations = {
       dashboard: 'لوحة التحكم',
       transactions: 'المعاملات',
       categories: 'التصنيفات',
+      budget: 'الميزانيات',
       analytics: 'التحليلات',
       profile: 'الملف الشخصي',
       settings: 'الإعدادات',
@@ -375,6 +418,16 @@ export const translations = {
       category: 'التصنيف',
       amount: 'المبلغ',
       type: 'النوع',
+      overspendingAlertTitle: 'تنبيه تجاوز الميزانية',
+      overspendingAlertDesc: 'مصروفاتك تتجاوز دخلك هذا الشهر. يرجى مراجعة ميزانيتك.',
+      overspendingWarning: 'تحذير: أنت تنفق أكثر مما تكسب هذا الشهر.',
+      topCategoryInsight: 'أكبر تصنيف لمصروفاتك هو {cat}.',
+      budgetDanger: 'لقد تجاوزت ميزانيتك لتصنيف {cat}.',
+      budgetWarning: 'أنت على وشك تجاوز ميزانيتك لتصنيف {cat}.',
+      savingsImproved: 'عمل رائع! تحسن معدل توفيرك هذا الشهر.',
+      savingsDropped: 'انخفض معدل توفيرك مقارنة بالشهر الماضي.',
+      spendingUp: 'زاد إنفاقك بشكل ملحوظ هذا الشهر.',
+      spendingDown: 'أنت تنفق أقل من الشهر الماضي. استمر في ذلك!',
     },
 
     // Transactions
@@ -435,6 +488,19 @@ export const translations = {
       categoryUpdated: 'تم تحديث التصنيف',
       categoryDeleted: 'تم حذف التصنيف',
       confirmDelete: 'هل أنت متأكد من حذف هذا التصنيف؟',
+      default: {
+        Salary: 'راتب',
+        Freelance: 'عمل حر',
+        Investments: 'استثمارات',
+        Food: 'طعام',
+        Transport: 'نقل',
+        Shopping: 'تسوق',
+        Bills: 'فواتير',
+        Healthcare: 'رعاية صحية',
+        Entertainment: 'ترفيه',
+        Education: 'تعليم',
+        Other: 'أخرى',
+      }
     },
 
     // Analytics
@@ -502,6 +568,24 @@ export const translations = {
       october: 'أكتوبر',
       november: 'نوفمبر',
       december: 'ديسمبر',
+    },
+
+    // Budget
+    budget: {
+      title: 'الميزانيات',
+      subtitle: 'إدارة حدود الإنفاق الشهري',
+      addBudget: 'تحديد ميزانية',
+      setBudgetTitle: 'تحديد ميزانية',
+      saveBudget: 'حفظ الميزانية',
+      budgetSaved: 'تم حفظ الميزانية بنجاح',
+      budgetDeleted: 'تم حذف الميزانية بنجاح',
+      confirmDelete: 'هل أنت متأكد من حذف هذه الميزانية؟',
+      spent: 'تم إنفاقه',
+      remaining: 'متبقي',
+      over: 'تجاوز الميزانية',
+      noBudgets: 'لم يتم تحديد ميزانيات',
+      createFirst: 'حدد حدود الإنفاق الشهري لتصنيفاتك للسيطرة على مصروفاتك.',
+      allCategoriesHaveBudget: 'جميع تصنيفات المصروفات لديها ميزانية بالفعل.',
     },
   },
 } as const;

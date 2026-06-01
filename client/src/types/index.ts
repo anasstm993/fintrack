@@ -127,3 +127,71 @@ export interface CategoryFormData {
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type Currency = 'USD' | 'EUR' | 'GBP' | 'LYD';
+
+export interface Insight {
+  type: 'warning' | 'info' | 'success' | 'danger';
+  message: string;
+  key: string;
+  data?: { categoryName?: string };
+}
+
+export interface FinancialSummary {
+  allTime: { totalIncome: number; totalExpenses: number; balance: number };
+  thisMonth: { income: number; expenses: number; balance: number };
+  lastMonth: { income: number; expenses: number; balance: number };
+  changes: { incomeChange: number; expenseChange: number };
+  transactionCount: number;
+}
+
+export interface BudgetStatus {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  budgetAmount: number;
+  spent: number;
+  remaining: number;
+  percentage: number;
+  status: 'safe' | 'warning' | 'danger' | 'exceeded';
+}
+
+export interface Budget {
+  id: string;
+  amount: number;
+  categoryId: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  category?: {
+    id: string;
+    name: string;
+    type: string;
+    icon?: string | null;
+  };
+}
+
+/** Shape of a single row returned by the transaction export API. */
+export interface ExportedTransaction {
+  Date: string;
+  Title: string;
+  Description: string;
+  Category: string;
+  Type: string;
+  Amount: string;
+}
+
+/** Response shape from the insights API endpoint. */
+export interface InsightsResponse {
+  insights: Insight[];
+  data: {
+    currentIncome: number;
+    currentExpenses: number;
+    prevIncome: number;
+    prevExpenses: number;
+    currentSavingsRate: number;
+    prevSavingsRate: number;
+    savingsRateChange: number;
+    topCategoryName: string;
+    topCategoryAmount: number;
+    expenseChange: number;
+  };
+}

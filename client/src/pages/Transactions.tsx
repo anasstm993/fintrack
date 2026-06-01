@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  Plus, Search, Filter, Download, X, Loader2,
+  Plus, Search, Filter, X, Loader2,
   ArrowUpRight, ArrowDownRight, Pencil, Trash2,
   ChevronLeft, ChevronRight, FileSpreadsheet, FileText,
 } from 'lucide-react';
@@ -14,8 +14,8 @@ import { useSettings } from '../store/settingsStore';
 import { useTranslation } from '../i18n';
 import { formatCurrency, formatDate } from '../utils/currency';
 import { useDebounce } from '../hooks/useDebounce';
+import { getTranslatedCategory } from '../utils/i18n';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
 import type { TransactionFilters, Transaction } from '../types';
 
 const transactionSchema = z.object({
@@ -33,6 +33,7 @@ export default function Transactions() {
   const { currency } = useSettings();
   const queryClient = useQueryClient();
   const { t, isRTL } = useTranslation();
+  const getTranslated = (name: string) => getTranslatedCategory(t, name);
 
   const [showModal, setShowModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -65,6 +66,7 @@ export default function Transactions() {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<TransactionForm>({
+    // @ts-expect-error - Zod resolver type mismatch with React Hook Form
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: 'EXPENSE',
@@ -81,7 +83,7 @@ export default function Transactions() {
     reset({
       title: '',
       description: '',
-      amount: undefined as any,
+      amount: undefined as unknown as number,
       type: 'EXPENSE',
       categoryId: '',
       date: new Date().toISOString().split('T')[0],
@@ -114,7 +116,8 @@ export default function Transactions() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setShowModal(false);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as any;
       toast.error(error.response?.data?.error || 'Failed to save transaction');
     }
   };
@@ -139,6 +142,7 @@ export default function Transactions() {
         return;
       }
 
+      const XLSX = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
@@ -152,6 +156,36 @@ export default function Transactions() {
     } catch {
       toast.error('Failed to export data');
     }
+  };
+
+  const applyDatePreset = (preset: '7d' | '30d' | 'thisMonth' | 'lastMonth' | 'all') => {
+    if (preset === 'all') {
+      setFilters(f => ({ ...f, startDate: undefined, endDate: undefined, page: 1 }));
+      return;
+    }
+
+    const today = new Date();
+    let start = new Date();
+    let end = new Date();
+
+    if (preset === '7d') {
+      start.setDate(today.getDate() - 7);
+    } else if (preset === '30d') {
+      start.setDate(today.getDate() - 30);
+    } else if (preset === 'thisMonth') {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    } else if (preset === 'lastMonth') {
+      start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      end = new Date(today.getFullYear(), today.getMonth(), 0);
+    }
+
+    setFilters(f => ({ 
+      ...f, 
+      startDate: start.toISOString().split('T')[0], 
+      endDate: end.toISOString().split('T')[0],
+      page: 1 
+    }));
   };
 
   const pagination = transactionsData?.pagination;
@@ -171,6 +205,25 @@ export default function Transactions() {
 
       {/* Search and Filters */}
       <div className="card p-4">
+        {/* Quick Date Presets */}
+        <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-surface-200 dark:border-surface-700">
+          <button onClick={() => applyDatePreset('all')} className="px-3 py-1.5 text-sm font-medium rounded-lg bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-700 dark:text-surface-300 dark:hover:bg-surface-600 transition-colors">
+            {(t.transactions as Record<string, string>)?.allTime || 'All Time'}
+          </button>
+          <button onClick={() => applyDatePreset('7d')} className="px-3 py-1.5 text-sm font-medium rounded-lg bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-700 dark:text-surface-300 dark:hover:bg-surface-600 transition-colors">
+            {(t.transactions as Record<string, string>)?.last7Days || 'Last 7 Days'}
+          </button>
+          <button onClick={() => applyDatePreset('30d')} className="px-3 py-1.5 text-sm font-medium rounded-lg bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-700 dark:text-surface-300 dark:hover:bg-surface-600 transition-colors">
+            {(t.transactions as Record<string, string>)?.last30Days || 'Last 30 Days'}
+          </button>
+          <button onClick={() => applyDatePreset('thisMonth')} className="px-3 py-1.5 text-sm font-medium rounded-lg bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-700 dark:text-surface-300 dark:hover:bg-surface-600 transition-colors">
+            {(t.transactions as Record<string, string>)?.thisMonth || 'This Month'}
+          </button>
+          <button onClick={() => applyDatePreset('lastMonth')} className="px-3 py-1.5 text-sm font-medium rounded-lg bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-700 dark:text-surface-300 dark:hover:bg-surface-600 transition-colors">
+            {(t.transactions as Record<string, string>)?.lastMonth || 'Last Month'}
+          </button>
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
@@ -207,7 +260,7 @@ export default function Transactions() {
               <label className="label">{t.dashboard.type}</label>
               <select
                 value={filters.type || ''}
-                onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value as any, page: 1 }))}
+                onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value as 'ALL' | 'INCOME' | 'EXPENSE', page: 1 }))}
                 className="input-field"
               >
                 <option value="">{t.transactions.allTypes}</option>
@@ -224,7 +277,7 @@ export default function Transactions() {
               >
                 <option value="">{t.transactions.allCategories}</option>
                 {categories?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>{getTranslated(c.name)}</option>
                 ))}
               </select>
             </div>
@@ -252,7 +305,7 @@ export default function Transactions() {
                 value={`${filters.sortBy}-${filters.sortOrder}`}
                 onChange={(e) => {
                   const [sortBy, sortOrder] = e.target.value.split('-');
-                  setFilters((f) => ({ ...f, sortBy: sortBy as any, sortOrder: sortOrder as any }));
+                  setFilters((f) => ({ ...f, sortBy: sortBy as 'date' | 'amount', sortOrder: sortOrder as 'desc' | 'asc' }));
                 }}
                 className="input-field"
               >
@@ -315,7 +368,7 @@ export default function Transactions() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-100 dark:bg-surface-700 text-surface-700 dark:text-surface-300">
-                          {tx.category?.name}
+                          {getTranslated(tx.category?.name)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -482,7 +535,7 @@ export default function Transactions() {
                 >
                   <option value="">{t.transactions.selectCategory}</option>
                   {filteredCategories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>{getTranslated(c.name)}</option>
                   ))}
                 </select>
                 {errors.categoryId && <p className="text-sm text-danger-500 mt-1">{errors.categoryId.message}</p>}

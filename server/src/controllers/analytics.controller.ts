@@ -5,13 +5,25 @@ export async function getDashboard(req: Request, res: Response, next: NextFuncti
   try {
     const userId = req.user!.userId;
 
-    const [incomeResult, expenseResult, recentTransactions, categoryBreakdown] = await Promise.all([
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    const [allTimeIncome, allTimeExpense, monthIncome, monthExpense, recentTransactions, categoryBreakdown] = await Promise.all([
       prisma.transaction.aggregate({
         where: { userId, type: 'INCOME' },
         _sum: { amount: true },
       }),
       prisma.transaction.aggregate({
         where: { userId, type: 'EXPENSE' },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.aggregate({
+        where: { userId, type: 'INCOME', date: { gte: monthStart, lte: monthEnd } },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.aggregate({
+        where: { userId, type: 'EXPENSE', date: { gte: monthStart, lte: monthEnd } },
         _sum: { amount: true },
       }),
       prisma.transaction.findMany({
@@ -29,8 +41,8 @@ export async function getDashboard(req: Request, res: Response, next: NextFuncti
       }),
     ]);
 
-    const totalIncome = Number(incomeResult._sum.amount || 0);
-    const totalExpenses = Number(expenseResult._sum.amount || 0);
+    const totalIncome = Number(allTimeIncome._sum.amount || 0);
+    const totalExpenses = Number(allTimeExpense._sum.amount || 0);
     const balance = totalIncome - totalExpenses;
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
 
@@ -204,6 +216,224 @@ export async function getMonthlyReport(req: Request, res: Response, next: NextFu
       expenseByCategory,
       dailyChart,
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getInsights(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.userId;
+
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+    const [thisMonthIncome, thisMonthExpenses, lastMonthIncome, lastMonthExpenses, topCategories] = await Promise.all([
+      prisma.transaction.aggregate({ where: { userId, type: 'INCOME', date: { gte: thisMonthStart, lte: thisMonthEnd } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { userId, type: 'EXPENSE', date: { gte: thisMonthStart, lte: thisMonthEnd } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { userId, type: 'INCOME', date: { gte: lastMonthStart, lte: lastMonthEnd } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { userId, type: 'EXPENSE', date: { gte: lastMonthStart, lte: lastMonthEnd } }, _sum: { amount: true } }),
+      prisma.transaction.groupBy({
+        by: ['categoryId'],
+        where: { userId, type: 'EXPENSE', date: { gte: thisMonthStart, lte: thisMonthEnd } },
+        _sum: { amount: true },
+        orderBy: { _sum: { amount: 'desc' } },
+        take: 5,
+      }),
+    ]);
+
+    const currentIncome = Number(thisMonthIncome._sum.amount || 0);
+    const currentExpenses = Number(thisMonthExpenses._sum.amount || 0);
+    const prevIncome = Number(lastMonthIncome._sum.amount || 0);
+    const prevExpenses = Number(lastMonthExpenses._sum.amount || 0);
+
+    const currentSavingsRate = currentIncome > 0 ? ((currentIncome - currentExpenses) / currentIncome) * 100 : 0;
+    const prevSavingsRate = prevIncome > 0 ? ((prevIncome - prevExpenses) / prevIncome) * 100 : 0;
+    const savingsRateChange = currentSavingsRate - prevSavingsRate;
+
+    // Get top category name
+    let topCategoryName = 'Unknown';
+    let topCategoryAmount = 0;
+    if (topCategories.length > 0) {
+      const cat = await prisma.category.findUnique({ where: { id: topCategories[0].categoryId }, select: { name: true } });
+      topCategoryName = cat?.name || 'Unknown';
+      topCategoryAmount = Number(topCategories[0]._sum.amount || 0);
+    }
+
+    const insights: { type: string; key: string; message: string; data: { categoryName: string } }[] = [];
+
+    // Get budgets and calculate their statuses
+    const budgets = await prisma.budget.findMany({
+      where: { userId },
+      include: { category: { select: { id: true, name: true } } },
+    });
+
+    if (budgets.length > 0) {
+      const categoryIds = budgets.map(b => b.categoryId);
+      const spending = await prisma.transaction.groupBy({
+        by: ['categoryId'],
+        where: {
+          userId,
+          type: 'EXPENSE',
+          categoryId: { in: categoryIds },
+          date: { gte: thisMonthStart, lte: thisMonthEnd },
+        },
+        _sum: { amount: true },
+      });
+
+      const spendingMap = new Map(spending.map(s => [s.categoryId, Number(s._sum.amount || 0)]));
+
+      budgets.forEach(budget => {
+        const budgetAmount = Number(budget.amount);
+        const spent = spendingMap.get(budget.categoryId) || 0;
+        const percentage = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0;
+
+        if (percentage >= 100) {
+          insights.push({
+            type: 'danger',
+            key: 'budget_danger',
+            message: `You have exceeded your budget for ${budget.category.name}.`,
+            data: { categoryName: budget.category.name },
+          });
+        } else if (percentage >= 80) {
+          insights.push({
+            type: 'warning',
+            key: 'budget_warning',
+            message: `You are close to exceeding your budget for ${budget.category.name}.`,
+            data: { categoryName: budget.category.name },
+          });
+        }
+      });
+    }
+
+    res.json({
+      insights,
+      data: {
+        currentIncome,
+        currentExpenses,
+        prevIncome,
+        prevExpenses,
+        currentSavingsRate: Math.round(currentSavingsRate * 100) / 100,
+        prevSavingsRate: Math.round(prevSavingsRate * 100) / 100,
+        savingsRateChange: Math.round(savingsRateChange * 100) / 100,
+        topCategoryName,
+        topCategoryAmount,
+        expenseChange: prevExpenses > 0 ? Math.round(((currentExpenses - prevExpenses) / prevExpenses) * 10000) / 100 : 0,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getSummary(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.userId;
+
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+    const [allTimeIncome, allTimeExpenses, thisMonthIncome, thisMonthExpenses, lastMonthIncome, lastMonthExpenses, transactionCount] = await Promise.all([
+      prisma.transaction.aggregate({ where: { userId, type: 'INCOME' }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { userId, type: 'EXPENSE' }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { userId, type: 'INCOME', date: { gte: thisMonthStart, lte: thisMonthEnd } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { userId, type: 'EXPENSE', date: { gte: thisMonthStart, lte: thisMonthEnd } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { userId, type: 'INCOME', date: { gte: lastMonthStart, lte: lastMonthEnd } }, _sum: { amount: true } }),
+      prisma.transaction.aggregate({ where: { userId, type: 'EXPENSE', date: { gte: lastMonthStart, lte: lastMonthEnd } }, _sum: { amount: true } }),
+      prisma.transaction.count({ where: { userId } }),
+    ]);
+
+    const totalIncome = Number(allTimeIncome._sum.amount || 0);
+    const totalExpenses = Number(allTimeExpenses._sum.amount || 0);
+    const currentMonthIncome = Number(thisMonthIncome._sum.amount || 0);
+    const currentMonthExpenses = Number(thisMonthExpenses._sum.amount || 0);
+    const previousMonthIncome = Number(lastMonthIncome._sum.amount || 0);
+    const previousMonthExpenses = Number(lastMonthExpenses._sum.amount || 0);
+
+    const incomeChange = previousMonthIncome > 0
+      ? ((currentMonthIncome - previousMonthIncome) / previousMonthIncome) * 100 : 0;
+    const expenseChange = previousMonthExpenses > 0
+      ? ((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses) * 100 : 0;
+
+    res.json({
+      allTime: { totalIncome, totalExpenses, balance: totalIncome - totalExpenses },
+      thisMonth: { income: currentMonthIncome, expenses: currentMonthExpenses, balance: currentMonthIncome - currentMonthExpenses },
+      lastMonth: { income: previousMonthIncome, expenses: previousMonthExpenses, balance: previousMonthIncome - previousMonthExpenses },
+      changes: {
+        incomeChange: Math.round(incomeChange * 100) / 100,
+        expenseChange: Math.round(expenseChange * 100) / 100,
+      },
+      transactionCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getBudgetStatus(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.userId;
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    const budgets = await prisma.budget.findMany({
+      where: { userId },
+      include: { category: { select: { id: true, name: true, type: true, icon: true } } },
+    });
+
+    if (budgets.length === 0) {
+      res.json([]);
+      return;
+    }
+
+    const categoryIds = budgets.map(b => b.categoryId);
+
+    const spending = await prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        userId,
+        type: 'EXPENSE',
+        categoryId: { in: categoryIds },
+        date: { gte: monthStart, lte: monthEnd },
+      },
+      _sum: { amount: true },
+    });
+
+    const spendingMap = new Map(spending.map(s => [s.categoryId, Number(s._sum.amount || 0)]));
+
+    const budgetStatus = budgets.map(budget => {
+      const budgetAmount = Number(budget.amount);
+      const spent = spendingMap.get(budget.categoryId) || 0;
+      const remaining = budgetAmount - spent;
+      const percentage = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0;
+      const status: 'safe' | 'warning' | 'danger' | 'exceeded' =
+        percentage >= 100 ? 'exceeded' :
+        percentage >= 80 ? 'danger' :
+        percentage >= 60 ? 'warning' : 'safe';
+
+      return {
+        id: budget.id,
+        categoryId: budget.categoryId,
+        categoryName: budget.category.name,
+        budgetAmount,
+        spent,
+        remaining,
+        percentage: Math.round(percentage * 100) / 100,
+        status,
+      };
+    });
+
+    budgetStatus.sort((a, b) => b.percentage - a.percentage);
+
+    res.json(budgetStatus);
   } catch (error) {
     next(error);
   }

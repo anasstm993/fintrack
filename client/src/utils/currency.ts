@@ -12,7 +12,12 @@ export function formatCurrency(amount: number | string, currency: Currency = 'US
   const config = currencyConfig[currency];
 
   if (currency === 'LYD') {
-    return `${config.symbol} ${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const lang = localStorage.getItem('language') === 'ar' ? 'ar' : 'en';
+    const symbol = lang === 'ar' ? 'د.ل' : 'LD';
+    const formattedNum = num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // For Arabic RTL, symbol on the left (which renders correctly in RTL flow)
+    // For English LTR, symbol on the left
+    return lang === 'ar' ? `${formattedNum} ${symbol}` : `${symbol} ${formattedNum}`;
   }
 
   return new Intl.NumberFormat(config.locale, {
@@ -40,8 +45,4 @@ export function formatDateShort(dateString: string): string {
 export function getMonthName(monthNum: number): string {
   const date = new Date(2024, monthNum - 1);
   return date.toLocaleDateString('en-US', { month: 'long' });
-}
-
-export function cn(...classes: (string | boolean | undefined | null)[]): string {
-  return classes.filter(Boolean).join(' ');
 }

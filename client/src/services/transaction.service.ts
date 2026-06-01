@@ -1,5 +1,5 @@
 import api from './api';
-import type { Transaction, PaginatedResponse, TransactionFilters } from '../types';
+import type { Transaction, PaginatedResponse, TransactionFilters, TransactionFormData, ExportedTransaction } from '../types';
 
 export const transactionService = {
   async getAll(filters: TransactionFilters = {}): Promise<PaginatedResponse<Transaction>> {
@@ -23,12 +23,12 @@ export const transactionService = {
     return response.data;
   },
 
-  async create(data: any): Promise<Transaction> {
+  async create(data: TransactionFormData): Promise<Transaction> {
     const response = await api.post('/transactions', data);
     return response.data;
   },
 
-  async update(id: string, data: any): Promise<Transaction> {
+  async update(id: string, data: Partial<TransactionFormData>): Promise<Transaction> {
     const response = await api.put(`/transactions/${id}`, data);
     return response.data;
   },
@@ -37,7 +37,7 @@ export const transactionService = {
     await api.delete(`/transactions/${id}`);
   },
 
-  async export(filters: TransactionFilters = {}): Promise<any[]> {
+  async export(filters: TransactionFilters = {}): Promise<ExportedTransaction[]> {
     const params = new URLSearchParams();
     if (filters.search) params.set('search', filters.search);
     if (filters.type) params.set('type', filters.type);

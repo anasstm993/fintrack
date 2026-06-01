@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-import { AuthProvider } from './store/authStore';
-import { ThemeProvider } from './store/themeStore';
-import { SettingsProvider } from './store/settingsStore';
+import { useAuth } from './store/authStore';
+import { useThemeInit } from './store/themeStore';
 import { LanguageProvider } from './i18n';
 import AppRouter from './routes';
+import { useEffect } from 'react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,28 +16,33 @@ const queryClient = new QueryClient({
   },
 });
 
+function AppInit() {
+  useThemeInit();
+  const initializeAuth = useAuth((state) => state.initialize);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  return <AppRouter />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <SettingsProvider>
-              <AppRouter />
-              <Toaster
-                position="top-right"
-                richColors
-                closeButton
-                toastOptions={{
-                  duration: 3000,
-                  style: {
-                    borderRadius: '12px',
-                  },
-                }}
-              />
-            </SettingsProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <AppInit />
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          duration={4000}
+          toastOptions={{
+            style: {
+              borderRadius: '12px',
+            },
+          }}
+        />
       </LanguageProvider>
     </QueryClientProvider>
   );

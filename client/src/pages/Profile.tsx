@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Camera, Loader2, User, Mail, Lock } from 'lucide-react';
+import { Camera, Loader2, User, Lock } from 'lucide-react';
 import { useAuth } from '../store/authStore';
 import { userService } from '../services/user.service';
 import { useTranslation } from '../i18n';
@@ -41,7 +41,8 @@ export default function Profile() {
       const updated = await userService.updateProfile(data);
       updateUser(updated);
       toast.success(t.profile.profileUpdated);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as any;
       toast.error(error.response?.data?.error || 'Failed to update profile');
     }
   };
@@ -51,7 +52,8 @@ export default function Profile() {
       await userService.changePassword(data);
       resetPassword();
       toast.success(t.profile.passwordChanged);
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as any;
       toast.error(error.response?.data?.error || 'Failed to change password');
     }
   };

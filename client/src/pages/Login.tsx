@@ -38,7 +38,8 @@ export default function Login() {
       login(response.user, response.accessToken, response.refreshToken);
       toast.success(t.auth.welcomeMsg);
       navigate('/dashboard');
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as any;
       toast.error(error.response?.data?.error || 'Failed to login');
     } finally {
       setIsLoading(false);

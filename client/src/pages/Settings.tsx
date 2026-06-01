@@ -1,4 +1,4 @@
-import { Sun, Moon, Monitor, DollarSign, Globe, Languages } from 'lucide-react';
+import { Sun, Moon, Monitor, DollarSign, Languages } from 'lucide-react';
 import { useTheme } from '../store/themeStore';
 import { useSettings } from '../store/settingsStore';
 import { useTranslation } from '../i18n';
