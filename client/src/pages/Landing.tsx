@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
   Wallet, ArrowRight, BarChart3, TrendingUp, Tags,
-  Download, Moon, Shield, Star, ChevronRight, Languages,
+  Download, Moon, Shield, ChevronRight, Languages,
 } from 'lucide-react';
 import { useTranslation } from '../i18n';
 
@@ -17,11 +17,7 @@ export default function Landing() {
     { icon: Moon, title: t.landing.feature6Title, description: t.landing.feature6Desc, iconColor: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
   ];
 
-  const testimonials = [
-    { name: isRTL ? 'سارة جونسون' : 'Sarah Johnson', role: isRTL ? 'مصممة حرة' : 'Freelance Designer', content: t.landing.testimonial1, rating: 5 },
-    { name: isRTL ? 'مايكل تشن' : 'Michael Chen', role: isRTL ? 'مهندس برمجيات' : 'Software Engineer', content: t.landing.testimonial2, rating: 5 },
-    { name: isRTL ? 'إيميلي رودريغيز' : 'Emily Rodriguez', role: isRTL ? 'صاحبة مشروع صغير' : 'Small Business Owner', content: t.landing.testimonial3, rating: 5 },
-  ];
+
 
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900">
@@ -40,9 +36,7 @@ export default function Landing() {
               <a href="#features" className="text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                 {t.landing.footerFeatures}
               </a>
-              <a href="#testimonials" className="text-sm font-medium text-surface-600 dark:text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-                {t.landing.testimonialsTitle}
-              </a>
+
             </div>
 
             <div className="flex items-center gap-3">
@@ -160,37 +154,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 lg:py-32 bg-surface-100/50 dark:bg-surface-800/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-surface-900 dark:text-white mb-4">{t.landing.testimonialsTitle}</h2>
-            <p className="text-lg text-surface-600 dark:text-surface-400">{t.landing.testimonialsSubtitle}</p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, index) => (
-              <div key={testimonial.name} className="card p-6 animate-slide-up" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-surface-700 dark:text-surface-300 text-sm leading-relaxed mb-6">"{testimonial.content}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-semibold">
-                    {testimonial.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-surface-900 dark:text-white">{testimonial.name}</p>
-                    <p className="text-xs text-surface-500">{testimonial.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-20 lg:py-32">
