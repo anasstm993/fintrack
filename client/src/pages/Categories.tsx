@@ -53,6 +53,16 @@ export default function Categories() {
     setShowModal(true);
   };
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['budget-status'] });
+    queryClient.invalidateQueries({ queryKey: ['insights'] });
+    queryClient.invalidateQueries({ queryKey: ['monthly-report'] });
+    queryClient.invalidateQueries({ queryKey: ['summary'] });
+  };
+
   const onSubmit = async (data: CategoryForm) => {
     try {
       if (editingCategory) {
@@ -62,7 +72,7 @@ export default function Categories() {
         await categoryService.create(data);
         toast.success(t.categories.categoryCreated);
       }
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      invalidateAll();
       setShowModal(false);
     } catch (err) {
       const error = err as any;
@@ -74,7 +84,7 @@ export default function Categories() {
     if (!confirm(t.categories.confirmDelete)) return;
     try {
       await categoryService.delete(id);
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      invalidateAll();
       toast.success(t.categories.categoryDeleted);
     } catch (err) {
       const error = err as any;

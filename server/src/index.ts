@@ -16,6 +16,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy is required for rate limiting to work correctly behind Nginx/Coolify
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(
@@ -31,10 +34,14 @@ app.use(
       if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) return callback(null, true);
 
       // Allow requests from the Coolify / project domain (e.g. fintrack.project.net.ly)
-      // Also allow subdomains that end with the project domain.
       if (/\.project\.net\.ly$/.test(origin)) return callback(null, true);
 
-      callback(new Error('Not allowed by CORS'));
+      // Log the rejected origin for debugging in production
+      console.warn(`CORS rejected origin: ${origin}`);
+      
+      // Instead of throwing an error which causes a 500, we pass false 
+      // which gracefully blocks CORS without crashing the request pipeline
+      callback(null, false);
     },
     credentials: true,
   })

@@ -104,6 +104,16 @@ export default function Transactions() {
     setShowModal(true);
   };
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['insights'] });
+    queryClient.invalidateQueries({ queryKey: ['summary'] });
+    queryClient.invalidateQueries({ queryKey: ['budget-status'] });
+    queryClient.invalidateQueries({ queryKey: ['monthly-report'] });
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+  };
+
   const onSubmit = async (data: TransactionForm) => {
     try {
       if (editingTransaction) {
@@ -113,8 +123,7 @@ export default function Transactions() {
         await transactionService.create(data);
         toast.success(t.transactions.transactionAdded);
       }
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      invalidateAll();
       setShowModal(false);
     } catch (err) {
       const error = err as any;
@@ -126,8 +135,7 @@ export default function Transactions() {
     if (!confirm(t.transactions.confirmDelete)) return;
     try {
       await transactionService.delete(id);
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      invalidateAll();
       toast.success(t.transactions.transactionDeleted);
     } catch {
       toast.error('Failed to delete transaction');

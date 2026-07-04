@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import { useAuth } from '../store/authStore';
+import { queryClient } from '../services/queryClient';
 import { useTranslation } from '../i18n';
 import { toast } from 'sonner';
 
@@ -40,12 +41,28 @@ export default function Register() {
     setIsLoading(true);
     try {
       const response = await authService.register(data);
+      queryClient.clear();
       login(response.user, response.accessToken, response.refreshToken);
       toast.success(t.auth.accountCreated);
       navigate('/dashboard');
-    } catch (err) {
-      const error = err as any;
-      toast.error(error.response?.data?.error || 'Registration failed');
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      // If we have a response with JSON data containing 'error'
+      if (err.response?.data?.error) {
+        toast.error(err.response.data.error);
+      } 
+      // If we have a response with JSON data containing 'details' (like Zod validation)
+      else if (err.response?.data?.details) {
+        const details = err.response.data.details;
+        toast.error(Array.isArray(details) ? details[0].message : 'Validation failed');
+      }
+      // If Nginx intercepted with 50x HTML or network error
+      else if (err.response?.status >= 500) {
+        toast.error('Server error: Please try again later.');
+      }
+      else {
+        toast.error(err.message || 'Registration failed');
+      }
     } finally {
       setIsLoading(false);
     }

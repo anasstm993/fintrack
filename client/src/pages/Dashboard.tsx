@@ -88,6 +88,9 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['insights'] });
       queryClient.invalidateQueries({ queryKey: ['summary'] });
       queryClient.invalidateQueries({ queryKey: ['budget-status'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['monthly-report'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast.success(t.transactions?.transactionDeleted || 'Deleted');
     } catch { toast.error('Failed to delete transaction'); }
   };

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuth } from '../store/authStore';
 
 // Use environment-configured API URL when provided; default to relative `/api`
 // so deployed frontends call the backend via the same origin (works with Coolify).
@@ -50,10 +51,8 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        // Use zustand logout to clear state without a full page reload
+        useAuth.getState().logout();
         return Promise.reject(refreshError);
       }
     }

@@ -65,11 +65,18 @@ export default function Budget() {
     setShowModal(true);
   };
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['budget-status'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['insights'] });
+    queryClient.invalidateQueries({ queryKey: ['summary'] });
+  };
+
   const onSubmit = async (data: z.infer<typeof budgetSchema>) => {
     try {
       await budgetService.set(data.categoryId, data.amount);
       toast.success(t.budget?.budgetSaved || 'Budget saved successfully');
-      queryClient.invalidateQueries({ queryKey: ['budget-status'] });
+      invalidateAll();
       setShowModal(false);
     } catch (err) {
       const error = err as any;
@@ -80,7 +87,7 @@ export default function Budget() {
   const handleDelete = async (id: string) => {
     try {
       await budgetService.delete(id);
-      queryClient.invalidateQueries({ queryKey: ['budget-status'] });
+      invalidateAll();
       toast.success(t.budget?.budgetDeleted || 'Budget deleted successfully');
     } catch {
       toast.error('Failed to delete budget');

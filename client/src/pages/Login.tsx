@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import { useAuth } from '../store/authStore';
+import { queryClient } from '../services/queryClient';
 import { useTranslation } from '../i18n';
 import { toast } from 'sonner';
 
@@ -35,6 +36,7 @@ export default function Login() {
     setIsLoading(true);
     try {
       const response = await authService.login(data);
+      queryClient.clear();
       login(response.user, response.accessToken, response.refreshToken);
       toast.success(t.auth.welcomeMsg);
       navigate('/dashboard');

@@ -24,6 +24,7 @@ import {
 import { useAuth } from '../store/authStore';
 import { useTheme } from '../store/themeStore';
 import { authService } from '../services/auth.service';
+import { queryClient } from '../services/queryClient';
 import { useTranslation } from '../i18n';
 import { translateInsight } from '../utils/i18n';
 import { toast } from 'sonner';
@@ -54,6 +55,7 @@ export default function DashboardLayout() {
     } catch {
       // Ignore logout API errors
     }
+    queryClient.clear();
     logout();
     navigate('/login');
     toast.success(t.auth.loggedOut);
